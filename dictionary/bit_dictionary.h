@@ -41,7 +41,7 @@
     3       1111110x xx
     ...
     6       1110xxxx xx
-    7+      110nnnnn 11111110 <n bytes> xx
+    7+      110nnnnn 11111110 <n bytes of xxxxxxxx> xx
                      1111110x
                      111110xx
                      11110xxx
@@ -51,9 +51,13 @@
                      0xxxxxxx
     
     After this comes a pointer that is a total of 22 bits, representing
-    a byte address for the branch.
+    a byte address for the branch. This is the reason for the two bits
+    all the encodings end in.
 
-    Translations therefore start at bit 2
+    Translations therefore start at bit 5, and go downwards after this.
+
+    Because I wanted to, and because it is easier to visualize, data
+    is MSB first, and big-endian.
     
 */
 
@@ -65,16 +69,17 @@ class StenoBitDictionary final : public StenoDictionary {
 public:
     StenoBitDictionary(const StenoDictionaryDefinition &definition)
         : StenoDictionary(definition.maximumOutlineLength)
+        , definition(definition)
         {}
     virtual StenoDictionaryLookupResult
     Lookup(const StenoDictionaryLookup &lookup) const;
     using StenoDictionary::Lookup;
 
     virtual const StenoDictionary *
-    GetLookupProvider(const StenoDictionary &lookup) const;
+    GetLookupProvider(const StenoDictionaryLookup &lookup) const;
 
     virtual bool
-    ReverseMapDictionaryLookup(StenoReverseDictionaryLookup &lookup) const = 0;
+    ReverseMapDictionaryLookup(StenoReverseMapDictionaryLookup &lookup) const = 0;
 
     virtual size_t GetMaximumOutlineLength() const;
     virtual const char *GetName() const;
@@ -82,8 +87,11 @@ public:
     virtual bool PrintDictionary(bool hasData) const;
 
 private:
-    const uint8_t *dictData;
-    const uint8_t *huffmanTree;
+    struct {
+        StenoDictionaryLookup lookup{nullptr,0};
+        char *translation=nullptr;
+    } data[16];
+    const StenoDictionaryDefinition &definition;
 };
 
 class HuffmanTreeEncodingData
@@ -95,5 +103,5 @@ public:
         
     }
 private:
-    u8 
+    
 };
